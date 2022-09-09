@@ -65,6 +65,7 @@ class GpuAssignmentDataset(Dataset):
         dynamic_shape = (num_samples, 1, input_size + 1 + racks_per_cluster + machines_per_rack * racks_per_cluster)
         self.gpu_request_seq = torch.randint(1,max_gpu_request, (num_samples, ))
         loads = torch.full(dynamic_shape, 1.)
+
         demands = torch.randint(0, max_demand + 1, dynamic_shape)
         # demands = torch.full(dynamic_shape, 1)
         demands = demands / float(max_load)
@@ -173,8 +174,10 @@ class GpuAssignmentDataset(Dataset):
         """
         tour distance of selected GPUs
         """
-
-        nodes = self.nodes_lst[tour_indices.cpu()][0]
+        if len(tour_indices.cpu()[0]) == 1:
+            nodes = self.nodes_lst[[tour_indices.cpu()]][0]
+        else:
+            nodes = self.nodes_lst[tour_indices.cpu()][0]
         nodes = np.insert(nodes, 0, 'center')
         routes, path = self.find_routes(nodes, self.G)
         length = 0
@@ -229,7 +232,6 @@ class GpuAssignmentDataset(Dataset):
         # for pair in routes:
         #     path.append(self.construct_edges(sp[pair[0]][pair[1]]))
         # return routes, path
-    
         sp = dict(nx.all_pairs_shortest_path(G))
         path = []
         routes = [[a, b] for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]

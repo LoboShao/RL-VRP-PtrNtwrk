@@ -43,7 +43,6 @@ def validate(data_loader, actor, reward_fn, render_fn=None, save_dir='.',
         x0 = x0.to(device) if len(x0) > 0 else None
         with torch.no_grad():
             tour_indices, _ = actor.forward(static, dynamic, x0)
-        print(tour_indices)
         reward = reward_fn(static, tour_indices).mean().item()
         rewards.append(reward)
 
