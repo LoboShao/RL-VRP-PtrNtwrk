@@ -175,7 +175,7 @@ class GpuAssignmentDataset(Dataset):
         """
 
         nodes = self.nodes_lst[tour_indices.cpu()][0]
-        nodes = np.insert(nodes, 0, 'center', axis=0)
+        nodes = np.insert(nodes, 0, 'center')
 
         routes, path = self.find_routes(nodes, self.G)
         length = 0
