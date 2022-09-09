@@ -232,7 +232,10 @@ class GpuAssignmentDataset(Dataset):
         # return routes, path
         sp = dict(nx.all_pairs_shortest_path(G))
         path = []
-        routes = [(a, b) for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
+        routes = [[a, b] for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
+
+        print(routes)
+
         for pair in routes:
             path.extend(self.construct_edges(sp[pair[0]][pair[1]]))
         path = self.removeDuplicates(path)
