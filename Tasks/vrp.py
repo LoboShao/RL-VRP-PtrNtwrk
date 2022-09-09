@@ -37,6 +37,7 @@ class VehicleRoutingDataset(Dataset):
         locations = torch.rand((num_samples, 2, input_size + 1))
         self.static = locations
 
+
         # All states will broadcast the drivers current load
         # Note that we only use a load between [0, 1] to prevent large
         # numbers entering the neural network
@@ -57,6 +58,7 @@ class VehicleRoutingDataset(Dataset):
 
     def __getitem__(self, idx):
         # (static, dynamic, start_loc)
+
         return (self.static[idx], self.dynamic[idx], self.static[idx, :, 0:1])
 
     def update_mask(self, mask, dynamic, chosen_idx=None):
@@ -70,7 +72,6 @@ class VehicleRoutingDataset(Dataset):
         # Convert floating point to integers for calculations
         loads = dynamic.data[:, 0]  # (batch_size, seq_len)
         demands = dynamic.data[:, 1]  # (batch_size, seq_len)
-
         # If there is no positive demand left, we can end the tour.
         # Note that the first node is the depot, which always has a negative demand
         if demands.eq(0).all():
@@ -78,14 +79,15 @@ class VehicleRoutingDataset(Dataset):
 
         # Otherwise, we can choose to go anywhere where demand is > 0
         new_mask = demands.ne(0) * demands.lt(loads)
-
         # We should avoid traveling to the depot back-to-back
         repeat_home = chosen_idx.ne(0)
 
         if repeat_home.any():
             new_mask[repeat_home.nonzero(), 0] = 1.
-        if (1 - repeat_home).any():
-            new_mask[(1 - repeat_home).nonzero(), 0] = 0.
+        # if (1 - repeat_home).any():
+        #     new_mask[(1 - repeat_home).nonzero(), 0] = 0.
+        if ~(repeat_home).any():
+            new_mask[~(repeat_home).nonzero(), 0] = 0
 
         # ... unless we're waiting for all other samples in a minibatch to finish
         has_no_load = loads[:, 0].eq(0).float()
@@ -95,7 +97,6 @@ class VehicleRoutingDataset(Dataset):
         if combined.any():
             new_mask[combined.nonzero(), 0] = 1.
             new_mask[combined.nonzero(), 1:] = 0.
-
         return new_mask.float()
 
     def update_dynamic(self, dynamic, chosen_idx):

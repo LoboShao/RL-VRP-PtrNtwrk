@@ -14,6 +14,8 @@ class Encoder(nn.Module):
         self.conv = nn.Conv1d(input_size, hidden_size, kernel_size=1)
 
     def forward(self, input):
+        # print('-'*50)
+
         output = self.conv(input)
         return output  # (batch, hidden_size, seq_len)
 
@@ -34,7 +36,6 @@ class Attention(nn.Module):
     def forward(self, static_hidden, dynamic_hidden, decoder_hidden):
 
         batch_size, hidden_size, _ = static_hidden.size()
-
         hidden = decoder_hidden.unsqueeze(2).expand_as(static_hidden)
         hidden = torch.cat((static_hidden, dynamic_hidden, hidden), 1)
 
@@ -73,7 +74,6 @@ class Pointer(nn.Module):
         self.drop_hh = nn.Dropout(p=dropout)
 
     def forward(self, static_hidden, dynamic_hidden, decoder_hidden, last_hh):
-
         rnn_out, last_hh = self.gru(decoder_hidden.transpose(2, 1), last_hh)
         rnn_out = rnn_out.squeeze(1)
 

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import copy
 import torch.optim as optim
 from torch.utils.data import DataLoader
 
@@ -13,6 +14,7 @@ from torch.utils.data import DataLoader
 from Models.actor import DRL4TSP
 from Tasks import vrp
 from Tasks.vrp import VehicleRoutingDataset
+from Tasks.gpu_asg import GpuAssignmentDataset
 from Models.critc import StateCritic
 
 torch.backends.cudnn.benchmark = True
@@ -37,8 +39,8 @@ def validate(data_loader, actor, reward_fn, render_fn=None, save_dir='.',
 
         static = static.to(device)
         dynamic = dynamic.to(device)
-        x0 = x0.to(device) if len(x0) > 0 else None
 
+        x0 = x0.to(device) if len(x0) > 0 else None
         with torch.no_grad():
             tour_indices, _ = actor.forward(static, dynamic, x0)
 
@@ -48,7 +50,7 @@ def validate(data_loader, actor, reward_fn, render_fn=None, save_dir='.',
         if render_fn is not None and batch_idx < num_plot:
             name = 'batch%d_%2.4f.png'%(batch_idx, reward)
             path = os.path.join(save_dir, name)
-            render_fn(static, tour_indices, path)
+            render_fn(static, dynamic, tour_indices, path)
 
     actor.train()
     return np.mean(rewards)
@@ -88,7 +90,6 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
 
         epoch_start = time.time()
         start = epoch_start
-
         for batch_idx, batch in enumerate(train_loader):
 
             static, dynamic, x0 = batch
@@ -98,7 +99,6 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             x0 = x0.to(device) if len(x0) > 0 else None
             # Full forward pass through the dataset
             tour_indices, tour_logp = actor(static, dynamic, x0)
-            print(tour_indices)
             # Sum the log probabilities for each city in the tour
             reward = reward_fn(static, tour_indices)
 
@@ -172,7 +172,7 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
               np.mean(times)))
 
 
-def train_vrp(args):
+def train_gpu(args):
 
     # Goals from paper:
     # VRP10, Capacity 20:  4.84  (Greedy)
@@ -182,27 +182,16 @@ def train_vrp(args):
 
     print('Starting VRP training')
 
-    # Determines the maximum amount of load for a vehicle based on num nodes
-    LOAD_DICT = {10: 20, 20: 30, 50: 40, 100: 50}
-    LOAD_DICT = {10:20, 20: 30}
-    MAX_DEMAND = 1
-    STATIC_SIZE = 2 # (x, y)
+    STATIC_SIZE = 23 # (x, y)
     DYNAMIC_SIZE = 2 # (load, demand)
+    NUM_SAMPLES = 1000
+    NUM_GPUS = 16
 
-    max_load = 500
 
-    train_data = VehicleRoutingDataset(args.train_size,
-                                       args.num_nodes,
-                                       max_load,
-                                       MAX_DEMAND,
-                                       args.seed)
+    train_data = GpuAssignmentDataset(NUM_SAMPLES, NUM_GPUS)
 
     print('Train data: {}'.format(train_data))
-    valid_data = VehicleRoutingDataset(args.valid_size,
-                                       args.num_nodes,
-                                       max_load,
-                                       MAX_DEMAND,
-                                       args.seed + 1)
+    valid_data = GpuAssignmentDataset(NUM_SAMPLES, NUM_GPUS)
 
     actor = DRL4TSP(STATIC_SIZE,
                     DYNAMIC_SIZE,
@@ -210,7 +199,9 @@ def train_vrp(args):
                     train_data.update_dynamic,
                     train_data.update_mask,
                     args.num_layers,
-                    args.dropout).to(device)
+                    args.dropout,
+                    train_data.demand_mask).to(device)
+
     print('Actor: {} '.format(actor))
 
     critic = StateCritic(STATIC_SIZE, DYNAMIC_SIZE, args.hidden_size).to(device)
@@ -220,8 +211,8 @@ def train_vrp(args):
     kwargs = vars(args)
     kwargs['train_data'] = train_data
     kwargs['valid_data'] = valid_data
-    kwargs['reward_fn'] = vrp.reward
-    kwargs['render_fn'] = vrp.render
+    kwargs['reward_fn'] = train_data.reward
+    kwargs['render_fn'] = train_data.render
 
     if args.checkpoint:
         path = os.path.join(args.checkpoint, 'actor.pt')
@@ -233,15 +224,11 @@ def train_vrp(args):
     if not args.test:
         train(actor, critic, **kwargs)
 
-    test_data = VehicleRoutingDataset(args.valid_size,
-                                      args.num_nodes,
-                                      max_load,
-                                      MAX_DEMAND,
-                                      args.seed + 2)
+    test_data = GpuAssignmentDataset(NUM_SAMPLES, NUM_GPUS)
 
     test_dir = 'test'
     test_loader = DataLoader(test_data, args.batch_size, False, num_workers=0)
-    out = validate(test_loader, actor, vrp.reward, vrp.render, test_dir, num_plot=5)
+    out = validate(test_loader, actor, train_data.reward, train_data.render, test_dir, num_plot=10)
 
     print('Average tour length: ', out)
 
@@ -260,8 +247,8 @@ if __name__ == '__main__':
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
-    parser.add_argument('--train-size',default=5, type=int)
-    parser.add_argument('--valid-size', default=5, type=int)
+    parser.add_argument('--train-size',default=20, type=int)
+    parser.add_argument('--valid-size', default=20, type=int)
 
     args = parser.parse_args()
 
@@ -271,5 +258,5 @@ if __name__ == '__main__':
 
     
     
-    train_vrp(args)
+    train_gpu(args)
     
