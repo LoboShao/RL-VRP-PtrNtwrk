@@ -176,6 +176,7 @@ class GpuAssignmentDataset(Dataset):
         """
         if len(tour_indices.cpu()[0]) == 1:
             nodes = self.nodes_lst[[tour_indices.cpu()]][0]
+            print(nodes)
         else:
             nodes = self.nodes_lst[tour_indices.cpu()][0]
         nodes = np.insert(nodes, 0, 'center')
