@@ -82,7 +82,7 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
     best_reward = np.inf
 
     for epoch in range(20):
-
+        print(f'epoch: {epoch}')
         actor.train()
         critic.train()
 
