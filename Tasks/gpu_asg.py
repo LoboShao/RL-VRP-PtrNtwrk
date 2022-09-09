@@ -234,7 +234,6 @@ class GpuAssignmentDataset(Dataset):
         path = []
         routes = [[a, b] for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
 
-        print(routes)
 
         for pair in routes:
             path.extend(self.construct_edges(sp[pair[0]][pair[1]]))
