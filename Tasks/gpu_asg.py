@@ -66,9 +66,21 @@ class GpuAssignmentDataset(Dataset):
         self.gpu_request_seq = torch.randint(1,max_gpu_request, (num_samples, ))
         loads = torch.full(dynamic_shape, 1.)
 
-        demands = torch.randint(0, max_demand + 1, dynamic_shape)
-        # demands = torch.full(dynamic_shape, 1)
-        demands = demands / float(max_load)
+        demands_gpu = torch.randint(0, max_demand + 1, (num_samples, 1, input_size))
+        demands_gpu= demands_gpu/ float(max_load)
+
+        demands = torch.zeros(dynamic_shape)
+        # print(demand_mask)
+        # print('gpus')
+        # print(demands_gpu)
+        j = 0
+        for i in range(len(demand_mask)):
+            if demand_mask[i] == False:
+                demands[:,:,i] = demands_gpu[:,:,j]
+                j += 1
+        # print('after:')
+        # print(demands)
+
 
         demand_mask = torch.tensor(demand_mask)
         demands[:, 0, 0] = 0 # depot starts with a demand of 0
@@ -174,10 +186,11 @@ class GpuAssignmentDataset(Dataset):
         """
         tour distance of selected GPUs
         """
-        if len(tour_indices.cpu()[0]) == 1:
-            nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
-        else:
-            nodes = self.nodes_lst[tour_indices.cpu()][0]
+        # if len(tour_indices.cpu()[0]) == 1:
+        #     nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
+        # else:
+        #     nodes = self.nodes_lst[tour_indices.cpu()][0]
+        nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
         nodes = np.append(nodes, 'center')
         routes, path = self.find_routes(nodes, self.G)
         length = 0
