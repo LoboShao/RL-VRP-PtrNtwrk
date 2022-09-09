@@ -187,7 +187,7 @@ class GpuAssignmentDataset(Dataset):
     def render(self, static, dynamic, tour_indices, save_path):
         """Plots the found solution."""
         nodes = self.nodes_lst[tour_indices][0]
-        nodes = np.insert(nodes, 0, 'center', axis=0)
+        nodes = np.insert(nodes, 0, 'center')
 
         routes, path = self.find_routes(nodes, self.G)
         plt.close('all')

@@ -184,7 +184,7 @@ def train_gpu(args):
 
     STATIC_SIZE = 23 # (x, y)
     DYNAMIC_SIZE = 2 # (load, demand)
-    NUM_SAMPLES = 100000
+    NUM_SAMPLES = 10000
     NUM_GPUS = 16
 
 
