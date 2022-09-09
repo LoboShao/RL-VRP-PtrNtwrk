@@ -203,7 +203,7 @@ class GpuAssignmentDataset(Dataset):
         #     nx.draw_networkx_edges(self.G, pos=pos, edgelist=edgelist, edge_color='r', width=5)
         nx.draw_networkx_edges(self.G, pos=pos, edgelist=path, edge_color='r', width=5)
         demands = dynamic.data[:, 1]
-        node_lst = demands.ne(0)[0]
+        node_lst = demands.ne(0)[0].cpu()
         # print(demands)
         # print(self.nodes_lst)
         # print(self.nodes_lst[~node_lst])
@@ -229,7 +229,7 @@ class GpuAssignmentDataset(Dataset):
         # for pair in routes:
         #     path.append(self.construct_edges(sp[pair[0]][pair[1]]))
         # return routes, path
-        print(nodes)
+        # print(nodes)
         sp = dict(nx.all_pairs_shortest_path(G))
         path = []
         routes = [[a, b] for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
