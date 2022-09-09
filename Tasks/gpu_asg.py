@@ -174,7 +174,7 @@ class GpuAssignmentDataset(Dataset):
         tour distance of selected GPUs
         """
 
-        nodes = self.nodes_lst[tour_indices][0]
+        nodes = self.nodes_lst[tour_indices.cpu()][0]
         nodes = np.insert(nodes, 0, 'center', axis=0)
 
         routes, path = self.find_routes(nodes, self.G)
