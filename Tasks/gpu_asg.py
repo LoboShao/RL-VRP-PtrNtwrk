@@ -176,7 +176,6 @@ class GpuAssignmentDataset(Dataset):
 
         nodes = self.nodes_lst[tour_indices.cpu()][0]
         nodes = np.insert(nodes, 0, 'center')
-
         routes, path = self.find_routes(nodes, self.G)
         length = 0
         for pair in path:
@@ -230,13 +229,13 @@ class GpuAssignmentDataset(Dataset):
         # for pair in routes:
         #     path.append(self.construct_edges(sp[pair[0]][pair[1]]))
         # return routes, path
+        print(nodes)
         sp = dict(nx.all_pairs_shortest_path(G))
         path = []
         routes = [[a, b] for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
-
-
         for pair in routes:
             path.extend(self.construct_edges(sp[pair[0]][pair[1]]))
+
         path = self.removeDuplicates(path)
         return routes, path
 

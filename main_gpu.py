@@ -100,6 +100,8 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             # Full forward pass through the dataset
             tour_indices, tour_logp = actor(static, dynamic, x0)
             # Sum the log probabilities for each city in the tour
+
+
             reward = reward_fn(static, tour_indices)
 
             # Query the critic for an estimate of the reward
