@@ -29,60 +29,70 @@ class GpuAssignmentDataset(Dataset):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1
+        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster
         self.num_samples = num_samples
         self.max_load = max_load
         self.max_demand = max_demand
 
-        G_orig = nx.Graph()
+        G = nx.Graph()
         cur = 0
-        G_orig.add_node('center')
+        G.add_node('center')
         demand_mask = [True]
         for i in range(racks_per_cluster):
             node_r = f'r{i}'
-            G_orig.add_node(node_r)
-            G_orig.add_edge(node_r, 'center', weight=0.5)
+            G.add_node(node_r)
+            G.add_edge(node_r, 'center', weight=0.5)
             demand_mask.append(True)
             for j in range(machines_per_rack):
                 node_m = f'r{i}m{j}'
-                G_orig.add_node(node_m)
-                G_orig.add_edge(node_m, node_r, weight=0.1)
+                G.add_node(node_m)
+                G.add_edge(node_m, node_r, weight=0.1)
                 demand_mask.append(True)
                 for k in range(gpus_per_machine):
                     node_g = f'g{cur}'
-                    G_orig.add_node(node_g)
-                    G_orig.add_edge(node_g, node_m, weight=0.025)
+                    G.add_node(node_g)
+                    G.add_edge(node_g, node_m, weight=0.025)
                     demand_mask.append(False)
                     for l in range(k):
                         node_neighbor = f'g{cur - l - 1}'
-                        G_orig.add_edge(node_g, node_neighbor, weight=0.025)
+                        G.add_edge(node_g, node_neighbor, weight=0.025)
                     cur += 1
-        self.G_orig = G_orig
-        G = nx.Graph()
-        G.add_node('center')
-        for node_1 in G_orig.nodes():
-            if 'g' in node_1:
-                G.add_node(node_1)
-
-        for node_1 in G.nodes():
-            for node_2 in G.nodes():
-                if node_1 != node_2:
-                    G.add_edge(node_1, node_2, weight=nx.dijkstra_path_length(G_orig, source=node_1, target=node_2))
-
         resources = nx.adjacency_matrix(G).todense()
         self.static = np.zeros((num_samples, resources.shape[0], resources.shape[1]), dtype=np.float32)
         self.static[0:] = resources
         self.root = torch.from_numpy(self.static[0][0].reshape(-1,1))
 
-        dynamic_shape = (num_samples, 1, input_size)
+        # self.static = np.expand_dims(self.static, axis=(0,1))
+
+
+        dynamic_shape = (num_samples, 1, input_size + 1 + racks_per_cluster + machines_per_rack * racks_per_cluster)
         self.gpu_request_seq = torch.randint(1,max_gpu_request, (num_samples, ))
         loads = torch.full(dynamic_shape, 1.)
 
-        demands = torch.randint(0, max_demand + 1, (num_samples, 1, input_size))
-        demands= demands/ float(max_load)
+        demands_gpu = torch.randint(0, max_demand + 1, (num_samples, 1, input_size))
+        demands_gpu= demands_gpu/ float(max_load)
 
+        demands = torch.zeros(dynamic_shape)
+        # print(demand_mask)
+        # print('gpus')
+        # print(demands_gpu)
+        j = 0
+        for i in range(len(demand_mask)):
+            if demand_mask[i] == False:
+                demands[:,:,i] = demands_gpu[:,:,j]
+                j += 1
+        # print('after:')
+        # print(demands)
+
+
+        demand_mask = torch.tensor(demand_mask)
         demands[:, 0, 0] = 0 # depot starts with a demand of 0
+        for d1 in demands:
+            for d2 in d1:
+                # d2[demand_mask] = 100
+                d2[demand_mask == True] = 0
 
+        self.demand_mask = demand_mask
         self.G = G
 
         self.nodes_lst = np.array(list(self.G))
@@ -179,6 +189,10 @@ class GpuAssignmentDataset(Dataset):
         """
         tour distance of selected GPUs
         """
+        # if len(tour_indices.cpu()[0]) == 1:
+        #     nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
+        # else:
+        #     nodes = self.nodes_lst[tour_indices.cpu()][0]
         nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
         nodes = np.append(nodes, 'center')
         routes, path = self.find_routes(nodes, self.G)
@@ -193,20 +207,20 @@ class GpuAssignmentDataset(Dataset):
         nodes = self.nodes_lst[tour_indices.cpu()][0]
         nodes = np.insert(nodes, 0, 'center')
 
-        routes, path = self.find_routes(nodes, self.G_orig)
+        routes, path = self.find_routes(nodes, self.G)
         plt.close('all')
 
-        pos = graphviz_layout(self.G_orig, prog="twopi")
+        pos = graphviz_layout(self.G, prog="twopi")
 
         # nx.draw_networkx_nodes(self.G, pos, nodelist=[], node_color="g")
 
         plt.rcParams["figure.figsize"] = [12, 10]
         plt.rcParams["figure.dpi"] = 60
         plt.rcParams["figure.autolayout"] = False
-        nx.draw_networkx(self.G_orig, pos, with_labels=True)
+        nx.draw_networkx(self.G, pos, with_labels=True)
         # for ctr, edgelist in enumerate(path):
         #     nx.draw_networkx_edges(self.G, pos=pos, edgelist=edgelist, edge_color='r', width=5)
-        nx.draw_networkx_edges(self.G_orig, pos=pos, edgelist=path, edge_color='r', width=5)
+        nx.draw_networkx_edges(self.G, pos=pos, edgelist=path, edge_color='r', width=5)
         demands = dynamic.data[:, 1]
         node_lst = demands.ne(0)[0].cpu()
         # print(demands)
@@ -214,7 +228,7 @@ class GpuAssignmentDataset(Dataset):
         # print(self.nodes_lst[~node_lst])
         # print(self.nodes_lst[tour_indices][0])
         # print('-'*50)
-        nx.draw_networkx_nodes(self.G_orig, pos, nodelist=self.nodes_lst[~node_lst], node_color="r")
+        nx.draw_networkx_nodes(self.G, pos, nodelist=self.nodes_lst[~node_lst], node_color="r")
         plt.tight_layout()
         plt.title(name)
         buf = io.BytesIO()

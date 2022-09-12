@@ -16,6 +16,7 @@ from Tasks import vrp
 from Tasks.vrp import VehicleRoutingDataset
 from Tasks.gpu_asg import GpuAssignmentDataset
 from Models.critc import StateCritic
+from util.logger import Logger
 
 torch.backends.cudnn.benchmark = True
 torch.backends.cudnn.enabled=False
@@ -23,10 +24,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Detected device {}'.format(device))
 
 
-def validate(data_loader, actor, reward_fn, render_fn=None, save_dir='.',
+def validate(logger, epoch, data_loader, actor, reward_fn, render_fn=None, save_dir='.',
              num_plot=5):
     """Used to monitor progress on a validation set & optionally plot solution."""
-
     actor.eval()
 
     if not os.path.exists(save_dir):
@@ -47,9 +47,8 @@ def validate(data_loader, actor, reward_fn, render_fn=None, save_dir='.',
         rewards.append(reward)
 
         if render_fn is not None and batch_idx < num_plot:
-            name = 'batch%d_%2.4f.png'%(batch_idx, reward)
-            path = os.path.join(save_dir, name)
-            render_fn(static, dynamic, tour_indices, path)
+            name = 'batch%d_%2.4f'%(batch_idx, reward)
+            render_fn(logger, dynamic, name, epoch, tour_indices)
 
     actor.train()
     return np.mean(rewards)
@@ -74,10 +73,8 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
 
     train_loader = DataLoader(train_data, batch_size, True, num_workers=0)
     valid_loader = DataLoader(valid_data, batch_size, False, num_workers=0)
+    logger = Logger(f'./logs/train')
 
-
-
-    best_params = None
     best_reward = np.inf
 
     for epoch in range(20):
@@ -152,8 +149,7 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
 
         # Save rendering of validation set tours
         valid_dir = os.path.join(save_dir, '%s' % epoch)
-
-        mean_valid = validate(valid_loader, actor, reward_fn, render_fn,
+        mean_valid = validate(logger, epoch, valid_loader, actor, reward_fn, render_fn,
                               valid_dir, num_plot=5)
 
         # Save best model parameters
@@ -175,24 +171,31 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
 
 def train_gpu(args):
 
-    # Goals from paper:
-    # VRP10, Capacity 20:  4.84  (Greedy)
-    # VRP20, Capacity 30:  6.59  (Greedy)
-    # VRP50, Capacity 40:  11.39 (Greedy)
-    # VRP100, Capacity 50: 17.23  (Greedy)
+    print('Starting GPU Assignment training')
 
-    print('Starting VRP training')
+    GPUS_PER_MACHINE = 4
+    MACHINES_PER_RACK = 2
+    RACKS_PER_CLUSTER = 2
+    # STATIC_SIZE = 23 # (x, y)
+    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1 + \
+                  RACKS_PER_CLUSTER + MACHINES_PER_RACK * RACKS_PER_CLUSTER
 
-    STATIC_SIZE = 23 # (x, y)
+    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
+
     DYNAMIC_SIZE = 2 # (load, demand)
     NUM_SAMPLES = 10000
-    NUM_GPUS = 16
+    logger = Logger(f'./logs/test')
 
-
-    train_data = GpuAssignmentDataset(NUM_SAMPLES, NUM_GPUS)
+    train_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
+                                      gpus_per_machine=GPUS_PER_MACHINE,
+                                      machines_per_rack=MACHINES_PER_RACK,
+                                      racks_per_cluster=RACKS_PER_CLUSTER)
 
     print('Train data: {}'.format(train_data))
-    valid_data = GpuAssignmentDataset(NUM_SAMPLES, NUM_GPUS)
+    valid_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
+                                      gpus_per_machine=GPUS_PER_MACHINE,
+                                      machines_per_rack=MACHINES_PER_RACK,
+                                      racks_per_cluster=RACKS_PER_CLUSTER)
 
     actor = DRL4TSP(STATIC_SIZE,
                     DYNAMIC_SIZE,
@@ -200,8 +203,7 @@ def train_gpu(args):
                     train_data.update_dynamic,
                     train_data.update_mask,
                     args.num_layers,
-                    args.dropout,
-                    train_data.demand_mask).to(device)
+                    args.dropout).to(device)
 
     print('Actor: {} '.format(actor))
 
@@ -225,12 +227,14 @@ def train_gpu(args):
     if not args.test:
         train(actor, critic, **kwargs)
 
-    test_data = GpuAssignmentDataset(NUM_SAMPLES, NUM_GPUS)
+    test_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
+                                      gpus_per_machine=GPUS_PER_MACHINE,
+                                      machines_per_rack=MACHINES_PER_RACK,
+                                      racks_per_cluster=RACKS_PER_CLUSTER)
 
     test_dir = 'test'
     test_loader = DataLoader(test_data, args.batch_size, False, num_workers=0)
-    out = validate(test_loader, actor, train_data.reward, train_data.render, test_dir, num_plot=10)
-
+    out = validate(logger, 20, test_loader, actor, train_data.reward, train_data.render, test_dir, num_plot=10)
     print('Average tour length: ', out)
 
 if __name__ == '__main__':

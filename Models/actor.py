@@ -142,7 +142,11 @@ class DRL4TSP(nn.Module):
                     num_gpus += 1
                     tour_logp.append(logp.unsqueeze(1))
                     tour_idx.append(ptr.data.unsqueeze(1))
-
+            else:
+                if ptr.data != 0:
+                    num_gpus += 1
+                    tour_logp.append(logp.unsqueeze(1))
+                    tour_idx.append(ptr.data.unsqueeze(1))
             decoder_input = torch.gather(static, 2,
                                          ptr.view(-1, 1, 1)
                                          .expand(-1, input_size, 1)).detach()
