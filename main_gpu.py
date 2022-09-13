@@ -152,6 +152,10 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
         mean_valid = validate(logger, epoch, valid_loader, actor, reward_fn, render_fn,
                               valid_dir, num_plot=5)
 
+        logger.scalar_summary('mean rewards', mean_valid, epoch)
+        logger.scalar_summary('loss', mean_loss, epoch)
+
+        
         # Save best model parameters
         if mean_valid < best_reward:
 
@@ -235,7 +239,7 @@ def train_gpu(args):
     test_dir = 'test'
     test_loader = DataLoader(test_data, args.batch_size, False, num_workers=0)
     out = validate(logger, 20, test_loader, actor, train_data.reward, train_data.render, test_dir, num_plot=10)
-    print('Average tour length: ', out)
+    print('Average rewards: ', out)
 
 if __name__ == '__main__':
 
