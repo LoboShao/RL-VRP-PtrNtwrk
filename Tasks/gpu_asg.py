@@ -58,6 +58,7 @@ class GpuAssignmentDataset(Dataset):
                         G_orig.add_edge(node_g, node_neighbor, weight=0.025)
                     cur += 1
         self.G_orig = G_orig
+
         G = nx.Graph()
         G.add_node('center')
         for node_1 in G_orig.nodes():
