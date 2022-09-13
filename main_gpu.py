@@ -155,7 +155,7 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
         logger.scalar_summary('mean rewards', mean_valid, epoch)
         logger.scalar_summary('loss', mean_loss, epoch)
 
-        
+
         # Save best model parameters
         if mean_valid < best_reward:
 
@@ -187,7 +187,7 @@ def train_gpu(args):
     STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
 
     DYNAMIC_SIZE = 2 # (load, demand)
-    NUM_SAMPLES = 5000
+    NUM_SAMPLES = 1000
     logger = Logger(f'./logs/test')
 
     train_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
