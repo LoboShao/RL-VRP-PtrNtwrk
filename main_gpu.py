@@ -183,7 +183,7 @@ def train_gpu(args):
     STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
 
     DYNAMIC_SIZE = 2 # (load, demand)
-    NUM_SAMPLES = 10000
+    NUM_SAMPLES = 5000
     logger = Logger(f'./logs/test')
 
     train_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
