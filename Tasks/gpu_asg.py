@@ -79,7 +79,7 @@ class GpuAssignmentDataset(Dataset):
         self.gpu_request_seq = torch.randint(1,max_gpu_request, (num_samples, ))
         loads = torch.full(dynamic_shape, 1.)
 
-        demands = torch.randint(0, max_demand + 1, (num_samples, 1, input_size))
+        demands = torch.randint(0, max_demand + 1, dynamic_shape)
         demands= demands/ float(max_load)
 
         demands[:, 0, 0] = 0 # depot starts with a demand of 0
@@ -207,14 +207,11 @@ class GpuAssignmentDataset(Dataset):
         nx.draw_networkx(self.G_orig, pos, with_labels=True)
         # for ctr, edgelist in enumerate(path):
         #     nx.draw_networkx_edges(self.G, pos=pos, edgelist=edgelist, edge_color='r', width=5)
-        nx.draw_networkx_edges(self.G_orig, pos=pos, edgelist=path, edge_color='r', width=5)
+        nx.draw_networkx_edges(≥draw_networkx_edges_orig, pos=pos, edgelist=path, edge_color='r', width=5)
         demands = dynamic.data[:, 1]
+       node_lst
         node_lst = demands.ne(0)[0].cpu()
-        # print(demands)
-        # print(self.nodes_lst)
-        # print(self.nodes_lst[~node_lst])
-        # print(self.nodes_lst[tour_indices][0])
-        # print('-'*50)
+
         nx.draw_networkx_nodes(self.G_orig, pos, nodelist=self.nodes_lst[~node_lst], node_color="r")
         plt.tight_layout()
         plt.title(name)

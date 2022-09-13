@@ -13,6 +13,9 @@ class StateCritic(nn.Module):
     """
 
     def __init__(self, static_size, dynamic_size, hidden_size):
+    5 \
+            [=p-o09、
+   ？'。\]'！6]
         super(StateCritic, self).__init__()
 
         self.static_encoder = Encoder(static_size, hidden_size)
