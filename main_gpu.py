@@ -207,7 +207,8 @@ def train_gpu(args):
                     train_data.update_dynamic,
                     train_data.update_mask,
                     args.num_layers,
-                    args.dropout).to(device)
+                    args.dropout,
+                    train_data.demand_mask).to(device)
 
     print('Actor: {} '.format(actor))
 

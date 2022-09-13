@@ -135,8 +135,6 @@ class DRL4TSP(nn.Module):
             if self.mask_fn is not None:
                 mask = self.mask_fn(mask, dynamic, ptr.data).detach()
 
-
-
             if self.demand_mask != None:
                 if self.demand_mask[ptr.data] == False:
                     num_gpus += 1
