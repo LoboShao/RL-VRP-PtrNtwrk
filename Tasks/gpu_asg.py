@@ -181,10 +181,10 @@ class GpuAssignmentDataset(Dataset):
         """
         nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
         nodes = np.append(nodes, 'center')
-        routes, path = self.find_routes(nodes, self.G)
+        routes, path = self.find_routes(nodes, self.G_orig)
         length = 0
         for pair in path:
-            length += self.G[pair[0]][pair[1]]["weight"]
+            length += self.G_orig[pair[0]][pair[1]]["weight"]
         return torch.tensor(-length, dtype=torch.float32)
 
 
@@ -231,18 +231,11 @@ class GpuAssignmentDataset(Dataset):
         return lst
 
     def find_routes(self,nodes, G):
-        # sp = dict(nx.all_pairs_shortest_path(G))
-        # path = []
-        # routes = [(a, b) for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
-        # for pair in routes:
-        #     path.append(self.construct_edges(sp[pair[0]][pair[1]]))
-        # return routes, path
         sp = dict(nx.all_pairs_shortest_path(G))
         path = []
-        routes = [[a, b] for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
+        routes = [(a, b) for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
         for pair in routes:
             path.extend(self.construct_edges(sp[pair[0]][pair[1]]))
-
         path = self.removeDuplicates(path)
         return routes, path
 
