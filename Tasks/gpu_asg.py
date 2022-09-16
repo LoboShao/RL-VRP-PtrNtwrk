@@ -59,6 +59,7 @@ class GpuAssignmentDataset(Dataset):
                     cur += 1
         self.G_orig = G_orig
         self.demand_mask = demand_mask
+        self.demand_mask = None
         G = nx.Graph()
         G.add_node('center')
         for node_1 in G_orig.nodes():
