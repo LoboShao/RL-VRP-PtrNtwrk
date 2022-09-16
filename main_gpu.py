@@ -54,7 +54,7 @@ def validate(logger, epoch, data_loader, actor, reward_fn, render_fn=None, save_
     return np.mean(rewards)
 
 def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
-          render_fn, batch_size, actor_lr, critic_lr, max_grad_norm,
+          render_fn, batch_size, actor_lr, critic_lr, max_grad_norm, num_epoch,
           **kwargs):
     """Constructs the main actor & critic networks, and performs all training."""
 
@@ -77,7 +77,7 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
 
     best_reward = np.inf
 
-    for epoch in range(20):
+    for epoch in range(num_epoch):
         print(f'epoch: {epoch}')
         actor.train()
         critic.train()
@@ -178,7 +178,7 @@ def train_gpu(args):
     print('Starting GPU Assignment training')
 
     GPUS_PER_MACHINE = 4
-    MACHINES_PER_RACK = 2
+    MACHINES_PER_RACK = 4
     RACKS_PER_CLUSTER = 2
     # STATIC_SIZE = 23 # (x, y)
     STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1 + \
@@ -221,6 +221,7 @@ def train_gpu(args):
     kwargs['valid_data'] = valid_data
     kwargs['reward_fn'] = train_data.reward
     kwargs['render_fn'] = train_data.render
+    kwargs['num_epoch'] = 100
 
     if args.checkpoint:
         path = os.path.join(args.checkpoint, 'actor.pt')
@@ -253,7 +254,7 @@ if __name__ == '__main__':
     parser.add_argument('--actor_lr', default=5e-4, type=float)
     parser.add_argument('--critic_lr', default=5e-4, type=float)
     parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=1, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)

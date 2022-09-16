@@ -93,10 +93,10 @@ class DRL4TSP(nn.Module):
         # their representations will need to get calculated again.
         static_hidden = self.static_encoder(static)
         dynamic_hidden = self.dynamic_encoder(dynamic)
-        num_gpus = 0
+        num_gpus = torch.zeros(batch_size)
         for _ in range(max_steps):
             # print(mask.byte())
-            if not mask.byte().any() or num_gpus == gpu_request:
+            if not mask.byte().any() or torch.all(num_gpus.eq(gpu_request)):
                 break
 
             # ... but compute a hidden rep for each element added to sequence
@@ -145,10 +145,11 @@ class DRL4TSP(nn.Module):
                     tour_logp.append(logp.unsqueeze(1))
                     tour_idx.append(ptr.data.unsqueeze(1))
             else:
-                if ptr.data != 0:
-                    num_gpus += 1
-                    tour_logp.append(logp.unsqueeze(1))
-                    tour_idx.append(ptr.data.unsqueeze(1))
+
+                # if ptr.data != 0:
+                num_gpus += 1
+                tour_logp.append(logp.unsqueeze(1))
+                tour_idx.append(ptr.data.unsqueeze(1))
             decoder_input = torch.gather(static, 2,
                                          ptr.view(-1, 1, 1)
                                          .expand(-1, input_size, 1)).detach()
