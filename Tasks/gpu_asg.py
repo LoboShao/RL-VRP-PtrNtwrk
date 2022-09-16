@@ -79,6 +79,11 @@ class GpuAssignmentDataset(Dataset):
         loads = torch.full(dynamic_shape, 1.)
 
         demands = torch.randint(0, max_demand + 1, dynamic_shape)
+        for i in range(num_samples):
+            demand = torch.randint(0, max_demand + 1, (1, input_size))
+            while torch.count_nonzero(demand) < 4:
+                demand = torch.randint(0, max_demand + 1, (1, input_size))
+            demands[i] = demand
         demands= demands/ float(max_load)
 
         demands[:, 0, 0] = 0 # depot starts with a demand of 0
