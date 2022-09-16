@@ -178,7 +178,7 @@ def train_gpu(args):
     print('Starting GPU Assignment training')
 
     GPUS_PER_MACHINE = 4
-    MACHINES_PER_RACK = 4
+    MACHINES_PER_RACK = 2
     RACKS_PER_CLUSTER = 2
     # STATIC_SIZE = 23 # (x, y)
     STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1 + \

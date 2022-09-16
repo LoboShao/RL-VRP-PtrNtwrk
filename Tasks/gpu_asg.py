@@ -69,7 +69,6 @@ class GpuAssignmentDataset(Dataset):
             for node_2 in G.nodes():
                 if node_1 != node_2:
                     G.add_edge(node_1, node_2, weight=nx.dijkstra_path_length(G_orig, source=node_1, target=node_2))
-
         resources = nx.adjacency_matrix(G).todense()
         self.static = np.zeros((num_samples, resources.shape[0], resources.shape[1]), dtype=np.float32)
         self.static[0:] = resources
@@ -207,9 +206,8 @@ class GpuAssignmentDataset(Dataset):
         nx.draw_networkx(self.G_orig, pos, with_labels=True)
         # for ctr, edgelist in enumerate(path):
         #     nx.draw_networkx_edges(self.G, pos=pos, edgelist=edgelist, edge_color='r', width=5)
-        nx.draw_networkx_edges(≥draw_networkx_edges_orig, pos=pos, edgelist=path, edge_color='r', width=5)
+        nx.draw_networkx_edges(self.G_orig, pos=pos, edgelist=path, edge_color='r', width=5)
         demands = dynamic.data[:, 1]
-       node_lst
         node_lst = demands.ne(0)[0].cpu()
 
         nx.draw_networkx_nodes(self.G_orig, pos, nodelist=self.nodes_lst[~node_lst], node_color="r")
@@ -249,8 +247,11 @@ class GpuAssignmentDataset(Dataset):
         return routes, path
 
     def removeDuplicates(self, lst):
-
-        return [t for t in (set(tuple(i) for i in lst))]
+        result = []
+        for item in lst:
+            if item not in result and ((item[1], item[0])) not in result:
+                result.append(item)
+        return result
 
 if __name__ == '__main__':
     dataset = GpuAssignmentDataset(2, 16)

@@ -134,6 +134,10 @@ class DRL4TSP(nn.Module):
             # And update the mask so we don't re-visit if we don't need to
             if self.mask_fn is not None:
                 mask = self.mask_fn(mask, dynamic, ptr.data).detach()
+                # for i in range(len(mask[0])):
+                #     print(f'{i} -- {mask[0][i]} {dynamic[:,1][0][i]}')
+                #     assert i == 0 or (mask[0][i] == 1 and dynamic[:,1][0][i] > 0) or (mask[0][i] == 0 and dynamic[:,1][0][i] <= 0)
+
 
             if self.demand_mask != None:
                 if self.demand_mask[ptr.data] == False:
