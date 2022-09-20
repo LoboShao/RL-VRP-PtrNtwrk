@@ -222,10 +222,10 @@ class GpuAssignmentDataset(Dataset):
         image = tf.expand_dims(image, 0)
 
         logger.image_summary(epoch, name, image)
-        print(tour_indices)
-        print(demands[0][tour_indices])
-        print(demands)
-        print('-'*50)
+        # print(tour_indices)
+        # print(demands[0][tour_indices])
+        # print(demands)
+        # print('-'*50)
 
     def construct_edges(self, nodes):
         lst = []
