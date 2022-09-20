@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 class GpuAssignmentDataset(Dataset):
-    def __init__(self, num_samples, max_load=5, max_demand=1,
+    def __init__(self, num_samples, max_load=8, max_demand=1,
                  racks_per_cluster=2,
                  machines_per_rack=2,
                  gpus_per_machine=4,
@@ -88,7 +88,6 @@ class GpuAssignmentDataset(Dataset):
         demands= demands/ float(max_load)
 
         demands[:, 0, 0] = 0 # depot starts with a demand of 0
-
         self.G = G
 
         self.nodes_lst = np.array(list(self.G))
@@ -122,23 +121,20 @@ class GpuAssignmentDataset(Dataset):
 
         # Otherwise, we can choose to go anywhere where demand is > 0
         new_mask = demands.ne(0) * demands.lt(loads)
-        # We should avoid traveling to the depot back-to-back
-        repeat_home = chosen_idx.ne(0)
 
+        # We should avoid traveling to the depot back-to-back
+
+        repeat_home = chosen_idx.ne(0)
         if repeat_home.any():
+
             new_mask[repeat_home.nonzero(), 0] = 1.
 
         if ~(repeat_home).any():
             new_mask[~(repeat_home).nonzero(), 0] = 0
 
-        # for i in range(len(new_mask[0])):
-        #     if new_mask[0][i] == self.demand_mask[i]:
-        #         print(f'{i} {self.nodes_lst[i]}')
-        # print('-'*50)
         # ... unless we're waiting for all other samples in a minibatch to finish
         has_no_load = loads[:, 0].eq(0).float()
         has_no_demand = demands[:, 1:].sum(1).eq(0).float()
-
         combined = (has_no_load + has_no_demand).gt(0)
         if combined.any():
             new_mask[combined.nonzero(), 0] = 1.
@@ -226,6 +222,10 @@ class GpuAssignmentDataset(Dataset):
         image = tf.expand_dims(image, 0)
 
         logger.image_summary(epoch, name, image)
+        print(tour_indices)
+        print(demands[0][tour_indices])
+        print(demands)
+        print('-'*50)
 
     def construct_edges(self, nodes):
         lst = []

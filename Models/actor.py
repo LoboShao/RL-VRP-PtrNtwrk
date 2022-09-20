@@ -79,6 +79,7 @@ class DRL4TSP(nn.Module):
         last_hh: Array of size (batch_size, num_hidden)
             Defines the last hidden state for the RNN
         """
+        prv_dynamic_demand = dynamic.data[:, 1][0].clone()
         batch_size, input_size, sequence_size = static.size()
 
         if decoder_input is None:
@@ -105,6 +106,7 @@ class DRL4TSP(nn.Module):
                                           dynamic_hidden,
                                           decoder_hidden, last_hh)
             probs = F.softmax(probs + mask.log(), dim=1)
+            # print(f'{probs} {mask}')
             # When training, sample the next step according to its probability.
             # During testing, we can take the greedy approach and choose highest
             if self.training:
@@ -134,22 +136,17 @@ class DRL4TSP(nn.Module):
             # And update the mask so we don't re-visit if we don't need to
             if self.mask_fn is not None:
                 mask = self.mask_fn(mask, dynamic, ptr.data).detach()
-                # for i in range(len(mask[0])):
-                #     print(f'{i} -- {mask[0][i]} {dynamic[:,1][0][i]}')
-                #     assert i == 0 or (mask[0][i] == 1 and dynamic[:,1][0][i] > 0) or (mask[0][i] == 0 and dynamic[:,1][0][i] <= 0)
-
-
+                # print(mask)
             if self.demand_mask != None:
                 if self.demand_mask[ptr.data] == False:
                     num_gpus += 1
                     tour_logp.append(logp.unsqueeze(1))
                     tour_idx.append(ptr.data.unsqueeze(1))
             else:
-
-                # if ptr.data != 0:
-                num_gpus += 1
-                tour_logp.append(logp.unsqueeze(1))
-                tour_idx.append(ptr.data.unsqueeze(1))
+                if prv_dynamic_demand[ptr.data] > 0:
+                    num_gpus += 1
+                    tour_logp.append(logp.unsqueeze(1))
+                    tour_idx.append(ptr.data.unsqueeze(1))
             decoder_input = torch.gather(static, 2,
                                          ptr.view(-1, 1, 1)
                                          .expand(-1, input_size, 1)).detach()
