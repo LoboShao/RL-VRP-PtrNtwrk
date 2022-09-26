@@ -78,7 +78,6 @@ class DRL4TSP(nn.Module):
         last_hh: Array of size (batch_size, num_hidden)
             Defines the last hidden state for the RNN
         """
-        prv_dynamic_demand = dynamic.data[:, 1][0].clone()
         batch_size, input_size, sequence_size = static.size()
 
         if decoder_input is None:
@@ -109,18 +108,6 @@ class DRL4TSP(nn.Module):
                                           decoder_hidden, last_hh)
             probs = F.softmax(probs + mask.log(), dim=1)
 
-            # When training, sample the next step according to its probability.
-            # During testing, we can take the greedy approach and choose highest
-            # if self.training:
-            #     m = torch.distributions.Categorical(probs)
-            #
-            #     # Sometimes an issue with Categorical & sampling on GPU; See:
-            #     # https://github.com/pemami4911/neural-combinatorial-rl-pytorch/issues/5
-            #     ptr = m.sample()
-            #     while not torch.gather(mask, 1, ptr.data.unsqueeze(1)).byte().all():
-            #         ptr = m.sample()
-            #     logp = m.log_prob(ptr)
-            # else:
             prob, ptr = torch.max(probs, 1)  # Greedy
             logp = prob.log()
 
@@ -145,7 +132,6 @@ class DRL4TSP(nn.Module):
                     tour_logp.append(logp.unsqueeze(1))
                     tour_idx.append(ptr.data.unsqueeze(1))
             else:
-                # if prv_dynamic_demand[ptr.data] > 0:
                 num_gpus += 1
                 tour_logp.append(logp.unsqueeze(1))
                 tour_idx.append(ptr.data.unsqueeze(1))
