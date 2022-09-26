@@ -47,7 +47,6 @@ class DRL4TSP(nn.Module):
 
         self.update_fn = update_fn
         self.mask_fn = mask_fn
-
         # Define the encoder & decoder models
         self.static_encoder = Encoder(static_size, hidden_size)
         self.dynamic_encoder = Encoder(dynamic_size, hidden_size)
@@ -86,6 +85,9 @@ class DRL4TSP(nn.Module):
             decoder_input = self.x0.expand(batch_size, -1, -1)
         # Always use a mask - if no function is provided, we don't update it
         mask = torch.ones(batch_size, sequence_size, device=device)
+        if self.mask_fn is not None:
+            mask = self.init_mask(dynamic)
+
         # Structures for holding the output sequences
         tour_idx, tour_logp = [], []
         max_steps = sequence_size if self.mask_fn is None else 1000
@@ -158,3 +160,22 @@ class DRL4TSP(nn.Module):
         tour_logp = torch.cat(tour_logp, dim=1)  # (batch_size, seq_len)
 
         return tour_idx, tour_logp
+
+    def init_mask(self, dynamic):
+        loads = dynamic.data[:, 0]  # (batch_size, seq_len)
+        demands = dynamic.data[:, 1]  # (batch_size, seq_len)
+
+        if demands.eq(0).all():
+            return demands * 0.
+
+        # Otherwise, we can choose to go anywhere where demand is > 0
+        new_mask = demands.ne(0) * demands.lt(loads)
+
+        has_no_load = loads[:, 0].eq(0).float()
+        has_no_demand = demands[:, 1:].sum(1).eq(0).float()
+        combined = (has_no_load + has_no_demand).gt(0)
+        if combined.any():
+            new_mask[combined.nonzero(), 0] = 1.
+            new_mask[combined.nonzero(), 1:] = 0.
+
+        return new_mask.float()

@@ -142,6 +142,7 @@ class GpuAssignmentDataset(Dataset):
 
         return new_mask.float()
 
+
     def update_dynamic(self, dynamic, chosen_idx):
         """Updates the (load, demand) dataset values."""
 
