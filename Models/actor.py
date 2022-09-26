@@ -106,7 +106,7 @@ class DRL4TSP(nn.Module):
                                           dynamic_hidden,
                                           decoder_hidden, last_hh)
             probs = F.softmax(probs + mask.log(), dim=1)
-            # print(f'{probs} {mask}')
+
             # When training, sample the next step according to its probability.
             # During testing, we can take the greedy approach and choose highest
             if self.training:
@@ -143,10 +143,10 @@ class DRL4TSP(nn.Module):
                     tour_logp.append(logp.unsqueeze(1))
                     tour_idx.append(ptr.data.unsqueeze(1))
             else:
-                if prv_dynamic_demand[ptr.data] > 0:
-                    num_gpus += 1
-                    tour_logp.append(logp.unsqueeze(1))
-                    tour_idx.append(ptr.data.unsqueeze(1))
+                # if prv_dynamic_demand[ptr.data] > 0:
+                num_gpus += 1
+                tour_logp.append(logp.unsqueeze(1))
+                tour_idx.append(ptr.data.unsqueeze(1))
             decoder_input = torch.gather(static, 2,
                                          ptr.view(-1, 1, 1)
                                          .expand(-1, input_size, 1)).detach()
