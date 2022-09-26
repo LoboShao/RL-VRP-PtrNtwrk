@@ -109,18 +109,18 @@ class DRL4TSP(nn.Module):
 
             # When training, sample the next step according to its probability.
             # During testing, we can take the greedy approach and choose highest
-            if self.training:
-                m = torch.distributions.Categorical(probs)
-
-                # Sometimes an issue with Categorical & sampling on GPU; See:
-                # https://github.com/pemami4911/neural-combinatorial-rl-pytorch/issues/5
-                ptr = m.sample()
-                while not torch.gather(mask, 1, ptr.data.unsqueeze(1)).byte().all():
-                    ptr = m.sample()
-                logp = m.log_prob(ptr)
-            else:
-                prob, ptr = torch.max(probs, 1)  # Greedy
-                logp = prob.log()
+            # if self.training:
+            #     m = torch.distributions.Categorical(probs)
+            #
+            #     # Sometimes an issue with Categorical & sampling on GPU; See:
+            #     # https://github.com/pemami4911/neural-combinatorial-rl-pytorch/issues/5
+            #     ptr = m.sample()
+            #     while not torch.gather(mask, 1, ptr.data.unsqueeze(1)).byte().all():
+            #         ptr = m.sample()
+            #     logp = m.log_prob(ptr)
+            # else:
+            prob, ptr = torch.max(probs, 1)  # Greedy
+            logp = prob.log()
 
             # After visiting a node update the dynamic representation
             if self.update_fn is not None:

@@ -221,7 +221,7 @@ def train_gpu(args):
     kwargs['valid_data'] = valid_data
     kwargs['reward_fn'] = train_data.reward
     kwargs['render_fn'] = train_data.render
-    kwargs['num_epoch'] = 100
+    kwargs['num_epoch'] = 20
 
     if args.checkpoint:
         path = os.path.join(args.checkpoint, 'actor.pt')
