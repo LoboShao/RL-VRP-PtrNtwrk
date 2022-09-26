@@ -181,19 +181,18 @@ def train_gpu(args):
     MACHINES_PER_RACK = 2
     RACKS_PER_CLUSTER = 2
     # STATIC_SIZE = 23 # (x, y)
-    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
+    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER
 
     DYNAMIC_SIZE = 2 # (load, demand)
-    NUM_SAMPLES = 5000
     logger = Logger(f'./logs/test')
 
-    train_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
+    train_data = GpuAssignmentDataset(num_samples=args.train_size,
                                       gpus_per_machine=GPUS_PER_MACHINE,
                                       machines_per_rack=MACHINES_PER_RACK,
                                       racks_per_cluster=RACKS_PER_CLUSTER)
 
     print('Train data: {}'.format(train_data))
-    valid_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
+    valid_data = GpuAssignmentDataset(num_samples=args.train_size,
                                       gpus_per_machine=GPUS_PER_MACHINE,
                                       machines_per_rack=MACHINES_PER_RACK,
                                       racks_per_cluster=RACKS_PER_CLUSTER)
@@ -230,7 +229,7 @@ def train_gpu(args):
     if not args.test:
         train(actor, critic, **kwargs)
 
-    test_data = GpuAssignmentDataset(num_samples=NUM_SAMPLES,
+    test_data = GpuAssignmentDataset(num_samples=args.test_size,
                                       gpus_per_machine=GPUS_PER_MACHINE,
                                       machines_per_rack=MACHINES_PER_RACK,
                                       racks_per_cluster=RACKS_PER_CLUSTER)
@@ -251,12 +250,12 @@ if __name__ == '__main__':
     parser.add_argument('--actor_lr', default=5e-4, type=float)
     parser.add_argument('--critic_lr', default=5e-4, type=float)
     parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=128, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
-    parser.add_argument('--train-size',default=20, type=int)
-    parser.add_argument('--valid-size', default=20, type=int)
+    parser.add_argument('--train-size',default=10000, type=int)
+    parser.add_argument('--valid-size', default=100, type=int)
 
     args = parser.parse_args()
 

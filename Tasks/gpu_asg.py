@@ -29,7 +29,7 @@ class GpuAssignmentDataset(Dataset):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1
+        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster
         self.num_samples = num_samples
         self.max_load = max_load
         self.max_demand = max_demand
@@ -58,10 +58,12 @@ class GpuAssignmentDataset(Dataset):
                         G_orig.add_edge(node_g, node_neighbor, weight=0.025)
                     cur += 1
         self.G_orig = G_orig
+        self.sp = dict(nx.all_pairs_shortest_path(self.G_orig))
+
         self.demand_mask = demand_mask
         self.demand_mask = None
         G = nx.Graph()
-        G.add_node('center')
+        # G.add_node('center')
         for node_1 in G_orig.nodes():
             if 'g' in node_1:
                 G.add_node(node_1)
@@ -184,7 +186,7 @@ class GpuAssignmentDataset(Dataset):
         """
         nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
         nodes = np.append(nodes, 'center')
-        routes, path = self.find_routes(nodes, self.G_orig)
+        routes, path = self.find_routes(nodes)
         length = 0
         for pair in path:
             length += self.G_orig[pair[0]][pair[1]]["weight"]
@@ -194,9 +196,8 @@ class GpuAssignmentDataset(Dataset):
     def render(self, logger, dynamic, name, epoch, tour_indices):
         """Plots the found solution."""
         nodes = self.nodes_lst[tour_indices.cpu()][0]
-        nodes = np.insert(nodes, 0, 'center')
-
-        routes, path = self.find_routes(nodes, self.G_orig)
+        nodes = np.append(nodes, 'center')
+        routes, path = self.find_routes(nodes)
         plt.close('all')
 
         pos = graphviz_layout(self.G_orig, prog="twopi")
@@ -237,12 +238,11 @@ class GpuAssignmentDataset(Dataset):
             prev = node
         return lst
 
-    def find_routes(self,nodes, G):
-        sp = dict(nx.all_pairs_shortest_path(G))
+    def find_routes(self, nodes):
         path = []
         routes = [(a, b) for idx, a in enumerate(nodes) for b in nodes[idx + 1:]]
         for pair in routes:
-            path.extend(self.construct_edges(sp[pair[0]][pair[1]]))
+            path.extend(self.construct_edges(self.sp[pair[0]][pair[1]]))
         path = self.removeDuplicates(path)
         return routes, path
 
