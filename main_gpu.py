@@ -97,7 +97,7 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             # Sum the log probabilities for each city in the tour
 
 
-            reward = reward_fn(static, tour_indices)
+            reward = reward_fn(static, tour_indices).to(device)
             # Query the critic for an estimate of the reward
             critic_est = critic(static, dynamic).view(-1).to(device)
 
