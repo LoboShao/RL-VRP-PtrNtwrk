@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 class GpuAssignmentDataset(Dataset):
-    def __init__(self, num_samples, max_load=8, max_demand=1,
+    def __init__(self, num_samples, max_load=4, max_demand=1,
                  racks_per_cluster=2,
                  machines_per_rack=2,
                  gpus_per_machine=4,
