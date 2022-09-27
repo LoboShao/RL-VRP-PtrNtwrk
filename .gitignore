@@ -163,5 +163,6 @@ cython_debug/
 #.idea/
 /test/
 /vrp/
-/logs/
+/useful/logs/
 /original/
+/useful/

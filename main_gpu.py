@@ -95,14 +95,13 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             tour_indices, tour_logp = actor(static, dynamic, x0)
             # Sum the log probabilities for each city in the tour
 
-
             reward = reward_fn(static, tour_indices).to(device)
             # Query the critic for an estimate of the reward
             critic_est = critic(static, dynamic).view(-1).to(device)
-
             advantage = (reward - critic_est)
             actor_loss = torch.mean(advantage.detach() * tour_logp.sum(dim=1))
             critic_loss = torch.mean(advantage ** 2)
+
 
             actor_optim.zero_grad()
             actor_loss.backward()
@@ -233,13 +232,13 @@ if __name__ == '__main__':
     parser.add_argument('--nodes', dest='num_nodes', default=10, type=int)
     parser.add_argument('--actor_lr', default=0.0005, type=float)
     parser.add_argument('--critic_lr', default=0.0005, type=float)
-    parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--max_grad_norm', default=1, type=float)
+    parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
-    parser.add_argument('--dropout', default=0.2, type=float)
-    parser.add_argument('--layers', dest='num_layers', default=2, type=int)
-    parser.add_argument('--train-size',default=10000, type=int)
-    parser.add_argument('--valid-size', default=100, type=int)
+    parser.add_argument('--dropout', default=0.1, type=float)
+    parser.add_argument('--layers', dest='num_layers', default=1, type=int)
+    parser.add_argument('--train-size',default=100000, type=int)
+    parser.add_argument('--valid-size', default=1000, type=int)
 
     args = parser.parse_args()
 

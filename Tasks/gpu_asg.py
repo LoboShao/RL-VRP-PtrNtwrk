@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 class GpuAssignmentDataset(Dataset):
-    def __init__(self, num_samples, max_load=4, max_demand=1,
+    def __init__(self, num_samples, max_load=5, max_demand=1,
                  racks_per_cluster=2,
                  machines_per_rack=2,
                  gpus_per_machine=4,
@@ -201,8 +201,7 @@ class GpuAssignmentDataset(Dataset):
         """
         tour distance of selected GPUs
         """
-        rewards = torch.empty((1, tour_indices.shape[0]))
-        i=0
+        rewards = []
         for tour in tour_indices:
             nodes_i = np.array([self.nodes_lst[tour.cpu()]])
             nodes_i = np.append(nodes_i, 'center')
@@ -210,14 +209,15 @@ class GpuAssignmentDataset(Dataset):
             length = 0
             for pair in path:
                 length += self.G_orig[pair[0]][pair[1]]["weight"]
-            rewards[0][i] = -length
-            i+=1
-        return rewards
+            rewards.append(-length)
+
+        return torch.tensor(rewards)
 
 
     def render(self, logger, dynamic, name, epoch, tour_indices):
         """Plots the found solution."""
-        nodes = self.nodes_lst[tour_indices.cpu()][0]
+        nodes = self.nodes_lst[tour_indices[0].cpu()]
+        name = self.nodes_lst[tour_indices[0].cpu()]
         nodes = np.append(nodes, 'center')
         routes, path = self.find_routes(nodes)
         plt.close('all')
