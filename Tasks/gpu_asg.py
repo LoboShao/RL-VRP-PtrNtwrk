@@ -184,7 +184,8 @@ class GpuAssignmentDataset(Dataset):
         """
         tour distance of selected GPUs
         """
-        rewards = []
+        rewards = torch.empty((1, tour_indices.shape[0]))
+        i=0
         for tour in tour_indices:
             nodes_i = np.array([self.nodes_lst[tour.cpu()]])
             nodes_i = np.append(nodes_i, 'center')
@@ -192,9 +193,9 @@ class GpuAssignmentDataset(Dataset):
             length = 0
             for pair in path:
                 length += self.G_orig[pair[0]][pair[1]]["weight"]
-            rewards.append(-length)
-
-        return torch.tensor(rewards, dtype=torch.float32)
+            rewards[0][i] = -length
+            i+=1
+        return rewards
 
 
     def render(self, logger, dynamic, name, epoch, tour_indices):
