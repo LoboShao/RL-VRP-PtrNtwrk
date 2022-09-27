@@ -46,7 +46,7 @@ def validate(logger, epoch, data_loader, actor, reward_fn, render_fn=None, save_
         reward = reward_fn(static, tour_indices).mean().item()
         rewards.append(reward)
         if render_fn is not None and batch_idx < num_plot:
-            name = '%2.2f tour: %s'%(reward, tour_indices.cpu().detach().numpy())
+            name = '%2.2f'%(reward)
             render_fn(logger, dynamic, name, epoch, tour_indices)
 
     actor.train()
@@ -98,10 +98,8 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
 
 
             reward = reward_fn(static, tour_indices)
-
             # Query the critic for an estimate of the reward
             critic_est = critic(static, dynamic).view(-1)
-
             advantage = (reward - critic_est)
             actor_loss = torch.mean(advantage.detach() * tour_logp.sum(dim=1))
             critic_loss = torch.mean(advantage ** 2)
@@ -249,11 +247,11 @@ if __name__ == '__main__':
     parser.add_argument('--actor_lr', default=5e-4, type=float)
     parser.add_argument('--critic_lr', default=5e-4, type=float)
     parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=8, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
-    parser.add_argument('--train-size',default=1000, type=int)
+    parser.add_argument('--train-size',default=10000, type=int)
     parser.add_argument('--valid-size', default=100, type=int)
 
     args = parser.parse_args()

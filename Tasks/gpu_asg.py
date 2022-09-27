@@ -184,17 +184,17 @@ class GpuAssignmentDataset(Dataset):
         """
         tour distance of selected GPUs
         """
-        nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
-        nodes = np.append(nodes, 'center')
-        routes, path = self.find_routes(nodes)
-        #print(tour_indices)
-        length = 0
-        for pair in path:
-            length += self.G_orig[pair[0]][pair[1]]["weight"]
-            #print(f'{pair[0]}-{pair[1]}: {self.G_orig[pair[0]][pair[1]]["weight"]}')
-        # print(-length)
-        # print('-'*50)
-        return torch.tensor(-length, dtype=torch.float32)
+        rewards = []
+        for tour in tour_indices:
+            nodes_i = np.array([self.nodes_lst[tour.cpu()]])
+            nodes_i = np.append(nodes_i, 'center')
+            routes, path = self.find_routes(nodes_i)
+            length = 0
+            for pair in path:
+                length += self.G_orig[pair[0]][pair[1]]["weight"]
+            rewards.append(-length)
+
+        return torch.tensor(rewards, dtype=torch.float32)
 
 
     def render(self, logger, dynamic, name, epoch, tour_indices):

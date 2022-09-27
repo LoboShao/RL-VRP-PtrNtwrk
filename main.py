@@ -98,7 +98,6 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             x0 = x0.to(device) if len(x0) > 0 else None
             # Full forward pass through the dataset
             tour_indices, tour_logp = actor(static, dynamic, x0)
-            print(tour_indices)
             # Sum the log probabilities for each city in the tour
             reward = reward_fn(static, tour_indices)
 
