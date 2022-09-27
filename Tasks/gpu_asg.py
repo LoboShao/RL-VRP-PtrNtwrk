@@ -29,7 +29,7 @@ class GpuAssignmentDataset(Dataset):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster
+        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1
         self.num_samples = num_samples
         self.max_load = max_load
         self.max_demand = max_demand
@@ -63,7 +63,7 @@ class GpuAssignmentDataset(Dataset):
         self.demand_mask = demand_mask
         self.demand_mask = None
         G = nx.Graph()
-        # G.add_node('center')
+        G.add_node('center')
         for node_1 in G_orig.nodes():
             if 'g' in node_1:
                 G.add_node(node_1)
@@ -76,7 +76,6 @@ class GpuAssignmentDataset(Dataset):
         self.static = np.zeros((num_samples, resources.shape[0], resources.shape[1]), dtype=np.float32)
         self.static[0:] = resources
         self.root = torch.from_numpy(self.static[0][0].reshape(-1,1))
-
         dynamic_shape = (num_samples, 1, input_size)
         self.gpu_request_seq = torch.randint(1,max_gpu_request, (num_samples, ))
         loads = torch.full(dynamic_shape, 1.)
@@ -84,12 +83,14 @@ class GpuAssignmentDataset(Dataset):
         demands = torch.randint(0, max_demand + 1, dynamic_shape)
         for i in range(num_samples):
             demand = torch.randint(0, max_demand + 1, (1, input_size))
+
+            demand[:,0] = 0
             while torch.count_nonzero(demand) < 4:
                 demand = torch.randint(0, max_demand + 1, (1, input_size))
             demands[i] = demand
         demands= demands/ float(max_load)
 
-        demands[:, 0, 0] = 0 # depot starts with a demand of 0
+        # demands[:, 0, 0] = 0 # depot starts with a demand of 0
         self.G = G
 
         self.nodes_lst = np.array(list(self.G))
@@ -124,13 +125,10 @@ class GpuAssignmentDataset(Dataset):
         # Otherwise, we can choose to go anywhere where demand is > 0
         new_mask = demands.ne(0) * demands.lt(loads)
 
-        # We should avoid traveling to the depot back-to-back
-
+        # We should avoid traveling to the depot back-to-bac
         repeat_home = chosen_idx.ne(0)
         if repeat_home.any():
-
-            new_mask[repeat_home.nonzero(), 0] = 1.
-
+            new_mask[repeat_home.nonzero(), 0] = 0
         if ~(repeat_home).any():
             new_mask[~(repeat_home).nonzero(), 0] = 0
 
@@ -141,7 +139,6 @@ class GpuAssignmentDataset(Dataset):
         if combined.any():
             new_mask[combined.nonzero(), 0] = 1.
             new_mask[combined.nonzero(), 1:] = 0.
-
         return new_mask.float()
 
 

@@ -46,9 +46,8 @@ def validate(logger, epoch, data_loader, actor, reward_fn, render_fn=None, save_
         reward = reward_fn(static, tour_indices).mean().item()
         rewards.append(reward)
         if render_fn is not None and batch_idx < num_plot:
-            name = '%2.2f'%(reward)
+            name = '%2.2f - %s'%(reward, tour_indices[0].cpu().detach().numpy())
             render_fn(logger, dynamic, name, epoch, tour_indices)
-
     actor.train()
     return np.mean(rewards)
 
@@ -179,7 +178,7 @@ def train_gpu(args):
     MACHINES_PER_RACK = 2
     RACKS_PER_CLUSTER = 2
     # STATIC_SIZE = 23 # (x, y)
-    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER
+    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
 
     DYNAMIC_SIZE = 2 # (load, demand)
     logger = Logger(f'./logs/test')
@@ -248,11 +247,11 @@ if __name__ == '__main__':
     parser.add_argument('--actor_lr', default=5e-4, type=float)
     parser.add_argument('--critic_lr', default=5e-4, type=float)
     parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=8, type=int)
+    parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
-    parser.add_argument('--train-size',default=1000, type=int)
+    parser.add_argument('--train-size',default=5000, type=int)
     parser.add_argument('--valid-size', default=100, type=int)
 
     args = parser.parse_args()
