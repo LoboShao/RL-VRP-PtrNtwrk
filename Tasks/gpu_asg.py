@@ -1,5 +1,6 @@
 import io
 import os
+import random
 import numpy as np
 import torch
 import tensorflow as tf
@@ -62,19 +63,25 @@ class GpuAssignmentDataset(Dataset):
 
         self.demand_mask = demand_mask
         self.demand_mask = None
-        G = nx.Graph()
-        G.add_node('center')
-        for node_1 in G_orig.nodes():
-            if 'g' in node_1:
-                G.add_node(node_1)
 
-        for node_1 in G.nodes():
-            for node_2 in G.nodes():
-                if node_1 != node_2:
-                    G.add_edge(node_1, node_2, weight=nx.dijkstra_path_length(G_orig, source=node_1, target=node_2))
-        resources = nx.adjacency_matrix(G).todense()
-        self.static = np.zeros((num_samples, resources.shape[0], resources.shape[1]), dtype=np.float32)
-        self.static[0:] = resources
+
+        self.static = np.zeros((num_samples, input_size, input_size), dtype=np.float32)
+        node_lst = list(G_orig.nodes())
+
+        for i in range(num_samples):
+            random.shuffle(node_lst)
+            G = nx.Graph()
+            G.add_node('center')
+            for node_1 in node_lst:
+                if 'g' in node_1:
+                    G.add_node(node_1)
+
+            for node_1 in G.nodes():
+                for node_2 in G.nodes():
+                    if node_1 != node_2:
+                        G.add_edge(node_1, node_2, weight=nx.dijkstra_path_length(G_orig, source=node_1, target=node_2))
+            resources = nx.adjacency_matrix(G).todense()
+            self.static[i] = resources
         self.root = torch.from_numpy(self.static[0][0].reshape(-1,1))
         dynamic_shape = (num_samples, 1, input_size)
         self.gpu_request_seq = torch.randint(1,max_gpu_request, (num_samples, ))

@@ -214,7 +214,7 @@ def train_gpu(args):
     kwargs['valid_data'] = valid_data
     kwargs['reward_fn'] = train_data.reward
     kwargs['render_fn'] = train_data.render
-    kwargs['num_epoch'] = 50
+    kwargs['num_epoch'] = 20
 
     if args.checkpoint:
         path = os.path.join(args.checkpoint, 'actor.pt')
@@ -247,11 +247,11 @@ if __name__ == '__main__':
     parser.add_argument('--actor_lr', default=5e-4, type=float)
     parser.add_argument('--critic_lr', default=5e-4, type=float)
     parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=8, type=int)
+    parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
-    parser.add_argument('--train-size',default=1000, type=int)
+    parser.add_argument('--train-size',default=5000, type=int)
     parser.add_argument('--valid-size', default=100, type=int)
 
     args = parser.parse_args()
