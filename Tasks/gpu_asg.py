@@ -30,7 +30,7 @@ class GpuAssignmentDataset(Dataset):
         np.random.seed()
         # torch.manual_seed(seed)
 
-        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster
+        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1
         self.num_samples = num_samples
         self.max_load = max_load
         self.max_demand = max_demand
@@ -83,7 +83,7 @@ class GpuAssignmentDataset(Dataset):
         #     resources = nx.adjacency_matrix(G).todense()
         #     self.static[i] = resources
         G = nx.Graph()
-        # G.add_node('center')
+        G.add_node('center')
         for node_1 in G_orig.nodes():
             if 'g' in node_1:
                 G.add_node(node_1)
@@ -104,7 +104,7 @@ class GpuAssignmentDataset(Dataset):
         for i in range(num_samples):
             demand = torch.randint(0, max_demand + 1, (1, input_size))
 
-            # demand[:,0] = 0
+            demand[:,0] = 0
             while torch.count_nonzero(demand) < 4:
                 demand = torch.randint(0, max_demand + 1, (1, input_size))
             demands[i] = demand
