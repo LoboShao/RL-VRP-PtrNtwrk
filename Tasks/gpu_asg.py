@@ -187,9 +187,13 @@ class GpuAssignmentDataset(Dataset):
         nodes = np.array([self.nodes_lst[tour_indices.cpu()]])
         nodes = np.append(nodes, 'center')
         routes, path = self.find_routes(nodes)
+        #print(tour_indices)
         length = 0
         for pair in path:
             length += self.G_orig[pair[0]][pair[1]]["weight"]
+            #print(f'{pair[0]}-{pair[1]}: {self.G_orig[pair[0]][pair[1]]["weight"]}')
+        # print(-length)
+        # print('-'*50)
         return torch.tensor(-length, dtype=torch.float32)
 
 
@@ -216,7 +220,7 @@ class GpuAssignmentDataset(Dataset):
 
         nx.draw_networkx_nodes(self.G_orig, pos, nodelist=self.nodes_lst[~node_lst], node_color="r")
         plt.tight_layout()
-        plt.title(name)
+        # plt.title(name)
         buf = io.BytesIO()
         plt.savefig(buf, bbox_inches='tight', dpi=200, format='png')
         buf.seek(0)
