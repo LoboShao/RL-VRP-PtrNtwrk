@@ -47,7 +47,7 @@ class GpuAssignmentDataset(Dataset):
             for j in range(machines_per_rack):
                 node_m = f'r{i}m{j}'
                 G_orig.add_node(node_m)
-                G_orig.add_edge(node_m, node_r, weight=0.1)
+                G_orig.add_edge(node_m, node_r, weight=0.25)
                 demand_mask.append(True)
                 for k in range(gpus_per_machine):
                     node_g = f'g{cur}'
