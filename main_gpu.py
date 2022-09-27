@@ -118,17 +118,6 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             rewards.append(torch.mean(reward.detach()).item())
             losses.append(torch.mean(actor_loss.detach()).item())
 
-            if (batch_idx + 1) % 100 == 0:
-                end = time.time()
-                times.append(end - start)
-                start = end
-
-                mean_loss = np.mean(losses[-100:])
-                mean_reward = np.mean(rewards[-100:])
-
-                print('  Batch %d/%d, reward: %2.3f, loss: %2.4f, took: %2.4fs' %
-                      (batch_idx, len(train_loader), mean_reward, mean_loss,
-                       times[-1]))
 
         mean_loss = np.mean(losses)
         mean_reward = np.mean(rewards)
@@ -164,10 +153,8 @@ def train(actor, critic, task, num_nodes, train_data, valid_data, reward_fn,
             save_path = os.path.join(save_dir, 'critic.pt')
             torch.save(critic.state_dict(), save_path)
 
-        print('Mean epoch loss/reward: %2.4f, %2.4f, %2.4f, took: %2.4fs '\
-              '(%2.4fs / 100 batches)\n' % \
-              (mean_loss, mean_reward, mean_valid, time.time() - epoch_start,
-              np.mean(times)))
+        print('Mean epoch loss/reward, valid: %2.4f, %2.4f, %2.4f\n' % \
+              (mean_loss, mean_reward, mean_valid))
 
 
 def train_gpu(args):
@@ -178,7 +165,7 @@ def train_gpu(args):
     MACHINES_PER_RACK = 2
     RACKS_PER_CLUSTER = 2
     # STATIC_SIZE = 23 # (x, y)
-    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
+    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER
 
     DYNAMIC_SIZE = 2 # (load, demand)
     logger = Logger(f'./logs/test')
@@ -244,10 +231,10 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true', default=False)
     parser.add_argument('--task', default='vrp')
     parser.add_argument('--nodes', dest='num_nodes', default=10, type=int)
-    parser.add_argument('--actor_lr', default=5e-4, type=float)
-    parser.add_argument('--critic_lr', default=5e-4, type=float)
+    parser.add_argument('--actor_lr', default=0.001, type=float)
+    parser.add_argument('--critic_lr', default=0.001, type=float)
     parser.add_argument('--max_grad_norm', default=2., type=float)
-    parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
