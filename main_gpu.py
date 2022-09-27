@@ -252,7 +252,7 @@ if __name__ == '__main__':
     parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--layers', dest='num_layers', default=1, type=int)
-    parser.add_argument('--train-size',default=10000, type=int)
+    parser.add_argument('--train-size',default=1000, type=int)
     parser.add_argument('--valid-size', default=100, type=int)
 
     args = parser.parse_args()
