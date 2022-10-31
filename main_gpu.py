@@ -166,8 +166,9 @@ def train_gpu(args):
     # STATIC_SIZE = 23 # (x, y)
     STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1
 
-    STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1 + \
-    RACKS_PER_CLUSTER + MACHINES_PER_RACK * RACKS_PER_CLUSTER
+    # STATIC_SIZE = GPUS_PER_MACHINE * MACHINES_PER_RACK * RACKS_PER_CLUSTER + 1 + \
+    # RACKS_PER_CLUSTER + MACHINES_PER_RACK * RACKS_PER_CLUSTER
+
     DYNAMIC_SIZE = 2 # (load, demand)
     logger = Logger(f'./logs/test')
 
@@ -236,9 +237,9 @@ if __name__ == '__main__':
     parser.add_argument('--critic_lr', default=0.0005, type=float)
     parser.add_argument('--max_grad_norm', default=1, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--hidden', dest='hidden_size', default=128, type=int)
+    parser.add_argument('--hidden', dest='hidden_size', default=512, type=int)
     parser.add_argument('--dropout', default=0.1, type=float)
-    parser.add_argument('--layers', dest='num_layers', default=1, type=int)
+    parser.add_argument('--layers', dest='num_layers', default=3, type=int)
     parser.add_argument('--train-size',default=10000, type=int)
     parser.add_argument('--valid-size', default=1000, type=int)
 

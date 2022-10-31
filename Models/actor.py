@@ -60,7 +60,7 @@ class DRL4TSP(nn.Module):
         self.x0 = torch.zeros((1, static_size, 1), requires_grad=True, device=device)
         self.demand_mask = demand_mask
 
-    def forward(self, static, dynamic, decoder_input=None, last_hh=None, gpu_request=4):
+    def forward(self, static, dynamic, decoder_input=None, last_hh=None, gpu_request=6):
         """
         Parameters
         ----------
@@ -143,6 +143,7 @@ class DRL4TSP(nn.Module):
             tour_idx.append(0)
             tour_logp.append(logp.unsqueeze(1))
         tour_idx = torch.cat(tour_idx, dim=1)  # (batch_size, seq_len)
+
         tour_logp = torch.cat(tour_logp, dim=1)  # (batch_size, seq_len)
 
         return tour_idx, tour_logp

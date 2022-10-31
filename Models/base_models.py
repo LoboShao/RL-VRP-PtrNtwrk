@@ -12,10 +12,8 @@ class Encoder(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(Encoder, self).__init__()
         self.conv = nn.Conv1d(input_size, hidden_size, kernel_size=1)
-
     def forward(self, input):
         # print('-'*50)
-
         output = self.conv(input)
         return output  # (batch, hidden_size, seq_len)
 

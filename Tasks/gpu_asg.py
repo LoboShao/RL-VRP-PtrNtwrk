@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 class GpuAssignmentDataset(Dataset):
-    def __init__(self, num_samples, max_load=5, max_demand=1,
+    def __init__(self, num_samples, max_load=7, max_demand=1,
                  racks_per_cluster=2,
                  machines_per_rack=2,
                  gpus_per_machine=4,
@@ -31,8 +31,9 @@ class GpuAssignmentDataset(Dataset):
         # torch.manual_seed(seed)
 
         input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1
-        input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1 + \
-                     racks_per_cluster + machines_per_rack * racks_per_cluster
+        # input_size = gpus_per_machine * machines_per_rack * racks_per_cluster + 1 + \
+        #              racks_per_cluster + machines_per_rack * racks_per_cluster
+
         self.num_samples = num_samples
         self.max_load = max_load
         self.max_demand = max_demand
@@ -71,16 +72,16 @@ class GpuAssignmentDataset(Dataset):
         node_lst = list(G_orig.nodes())
 
         G = nx.Graph()
-        G = self.G_orig
-        # G.add_node('center')
-        # for node_1 in G_orig.nodes():
-        #     if 'g' in node_1:
-        #         G.add_node(node_1)
-        #
-        # for node_1 in G.nodes():
-        #     for node_2 in G.nodes():
-        #         if node_1 != node_2:
-        #             G.add_edge(node_1, node_2, weight=nx.dijkstra_path_length(G_orig, source=node_1, target=node_2))
+        # G = self.G_orig
+        G.add_node('center')
+        for node_1 in G_orig.nodes():
+            if 'g' in node_1:
+                G.add_node(node_1)
+
+        for node_1 in G.nodes():
+            for node_2 in G.nodes():
+                if node_1 != node_2:
+                    G.add_edge(node_1, node_2, weight=nx.dijkstra_path_length(G_orig, source=node_1, target=node_2))
         resources = nx.adjacency_matrix(G).todense()
         self.static = np.zeros((num_samples, resources.shape[0], resources.shape[1]), dtype=np.float32)
         self.static[0:] = resources
@@ -93,9 +94,9 @@ class GpuAssignmentDataset(Dataset):
         for i in range(num_samples):
             demand = torch.randint(0, max_demand + 1, (1, input_size))
 
-            # demand[:,0] = 0
+            demand[:,0] = 0
 
-            demand[0][demand_mask] = 0
+            # demand[0][demand_mask] = 0
             while torch.count_nonzero(demand) < 4:
                 demand = torch.randint(0, max_demand + 1, (1, input_size))
             demands[i] = demand
