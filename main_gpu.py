@@ -203,7 +203,7 @@ def train_gpu(args):
     kwargs['valid_data'] = valid_data
     kwargs['reward_fn'] = train_data.reward
     kwargs['render_fn'] = train_data.render
-    kwargs['num_epoch'] = 10
+    kwargs['num_epoch'] = 50
 
     if args.checkpoint:
         path = os.path.join(args.checkpoint, 'actor.pt')
@@ -240,7 +240,7 @@ if __name__ == '__main__':
     parser.add_argument('--hidden', dest='hidden_size', default=2048, type=int)
     parser.add_argument('--dropout', default=0.2, type=float)
     parser.add_argument('--layers', dest='num_layers', default=2, type=int)
-    parser.add_argument('--train-size',default=10000, type=int)
+    parser.add_argument('--train-size',default=1000, type=int)
     parser.add_argument('--valid-size', default=1000, type=int)
 
     args = parser.parse_args()
