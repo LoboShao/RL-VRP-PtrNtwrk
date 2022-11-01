@@ -237,9 +237,9 @@ if __name__ == '__main__':
     parser.add_argument('--critic_lr', default=0.005, type=float)
     parser.add_argument('--max_grad_norm', default=1, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
-    parser.add_argument('--hidden', dest='hidden_size', default=1024, type=int)
-    parser.add_argument('--dropout', default=0.8, type=float)
-    parser.add_argument('--layers', dest='num_layers', default=3, type=int)
+    parser.add_argument('--hidden', dest='hidden_size', default=2048, type=int)
+    parser.add_argument('--dropout', default=0.2, type=float)
+    parser.add_argument('--layers', dest='num_layers', default=2, type=int)
     parser.add_argument('--train-size',default=10000, type=int)
     parser.add_argument('--valid-size', default=1000, type=int)
 
